@@ -2,6 +2,7 @@ import { Request, Response, Router } from "express";
 import { VulnerabilityReport } from "../models/vulnerability-report";
 import { Finding, NewRelicVulnerabilityReport } from "../models/new-relic-vulnerability-report";
 import axios from "axios";
+import { NerdGraphResponse } from "../models/nerd-graph-response";
 
 const webhookRouter = Router();
 
@@ -15,7 +16,7 @@ webhookRouter.post("/api/webhook", async (req: Request, res: Response) => {
   const nerdGraphQuery = `
   query {
     actor {
-      entitySearch(query: "domain='INFRA' AND type='CONTAINER' AND tags.k8s.clusterName='dev' AND tags.k8s.namespaceName='huna'") {
+      entitySearch(query: "domain='INFRA' AND type='CONTAINER' AND tags.k8s.clusterName='${data.metadata.labels.env}' AND tags.k8s.namespaceName='${data.metadata.namespace}' AND tags.k8s.${data.metadata.labels["trivy-operator.resource.kind"].toLowerCase()}Name='${data.metadata.labels["trivy-operator.resource.name"]}' AND tags.k8s.containerName='${data.metadata.labels["trivy-operator.container.name"]}'") {
         count
         results {
           entities {
@@ -28,20 +29,18 @@ webhookRouter.post("/api/webhook", async (req: Request, res: Response) => {
   }
   `;
 
-  const nerdGraphReply = await axios.post(process.env.NERD_GRAPH_URL!, {
+  const nerdGraphReply = await axios.post<NerdGraphResponse>(process.env.NERD_GRAPH_URL!, {
     query: nerdGraphQuery
   }, {
     headers: {
       'Api-Key': process.env.NEW_RELIC_API_KEY!
     }
   });
-
- console.log(nerdGraphReply.data);
   
   const newRelicPayload: NewRelicVulnerabilityReport = {
     findings: data.report?.vulnerabilities?.map(v => ({
       entityType: 'Container',
-      entityGuid: 'xxxxx',
+      entityGuid: nerdGraphReply.data.data.actor.entitySearch.results.entities[0].guid,
       issueID: v.vulnerabilityID,
       issueType: 'Container Vulnerability',
       message: v.description || v.title,
@@ -57,10 +56,16 @@ webhookRouter.post("/api/webhook", async (req: Request, res: Response) => {
         cluster: data.metadata.labels.cluster,
         env: data.metadata.labels.env
       }
-
     } as Finding))
   };
 
+  const newRelicReply = await axios.post<any>(process.env.NEW_RELIC_VULN_URL!, newRelicPayload, {
+    headers: {
+      'Api-Key': process.env.NEW_RELIC_API_KEY!
+    }
+  });
+
+  console.log(newRelicReply.data);
 
   res.send("Test OK 3333");
 });

@@ -48,6 +48,12 @@ spec:
               {{- else }}
               value: 'https://api.newrelic.com/graphql'
               {{- end }}
+            - name: NEW_RELIC_VULN_URL
+              {{- if .Values.newRelic.isEuRegion }}
+              value: 'https://security-api.service.eu.newrelic.com/security/v1'
+              {{- else }}
+              value: 'https://security-api.newrelic.com/security/v1'
+              {{- end }}
           ports:
             - name: http
               containerPort: {{ .Values.service.containerPort }}
