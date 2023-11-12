@@ -42,6 +42,11 @@ spec:
                 secretKeyRef:
                   name: {{ include "trivy-operator-newrelic-agent.fullname" . }}
                   key: newRelicApiKey
+            - name: NEW_RELIC_INGEST_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "trivy-operator-newrelic-agent.fullname" . }}
+                  key: newRelicIngestKey
             - name: NERD_GRAPH_URL
               {{- if .Values.newRelic.isEuRegion }}
               value: 'https://api.eu.newrelic.com/graphql'

@@ -3,6 +3,7 @@ import { VulnerabilityReport } from "../models/vulnerability-report";
 import { Finding, NewRelicVulnerabilityReport } from "../models/new-relic-vulnerability-report";
 import axios from "axios";
 import { NerdGraphResponse } from "../models/nerd-graph-response";
+import { NewRelicVulnerabilityResponse } from "../models/new-relic-vulnerability-response";
 
 const webhookRouter = Router();
 
@@ -41,7 +42,7 @@ webhookRouter.post("/api/webhook", async (req: Request, res: Response) => {
     findings: data.report?.vulnerabilities?.map(v => ({
       entityType: 'Container',
       entityGuid: nerdGraphReply.data.data.actor.entitySearch.results.entities[0].guid,
-      issueID: v.vulnerabilityID,
+      issueId: v.vulnerabilityID,
       issueType: 'Container Vulnerability',
       message: v.description || v.title,
       severity: v.severity,
@@ -59,15 +60,19 @@ webhookRouter.post("/api/webhook", async (req: Request, res: Response) => {
     } as Finding))
   };
 
-  const newRelicReply = await axios.post<any>(process.env.NEW_RELIC_VULN_URL!, newRelicPayload, {
+  const newRelicReply = await axios.post<NewRelicVulnerabilityResponse>(process.env.NEW_RELIC_VULN_URL!, newRelicPayload, {
     headers: {
-      'Api-Key': process.env.NEW_RELIC_API_KEY!
+      'Api-Key': process.env.NEW_RELIC_INGEST_KEY!,
+      'Content-Type': 'application/json'
     }
   });
 
-  console.log(newRelicReply.data);
+  if (!newRelicReply.data.success) {
+    res.status(400).send({success: false, error: newRelicReply.data.errorMessage});
+    return;
+  }
 
-  res.send("Test OK 3333");
+  res.send({success: true});
 });
 
 export default webhookRouter;

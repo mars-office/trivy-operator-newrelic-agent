@@ -1,5 +1,6 @@
 newRelic:
   apiKey: ""
+  ingestKey: ""
   isEuRegion: true
 
 replicaCount: 1
