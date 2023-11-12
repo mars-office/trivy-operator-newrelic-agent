@@ -1,3 +1,7 @@
+newRelic:
+  apiKey: ""
+  isEuRegion: true
+
 replicaCount: 1
 
 image:
@@ -69,8 +73,3 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
-
-envFrom: []
-env: []
-volumes: []
-volumeMounts: []

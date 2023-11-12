@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 import express, { Application } from "express";
 import morgan from "morgan";
 import globalErrorHandlerMiddleware from "./middlewares/global-error-handler.middleware";
-import testRouter from "./routes/test.route";
+import webhookRouter from "./routes/webhook.route";
 import healthCheckRouter from "./routes/health-check.route";
 
 dotenv.config();
@@ -17,7 +17,7 @@ app.use(morgan(
 app.use(healthCheckRouter);
 
 // Secure routes
-app.use(testRouter);
+app.use(webhookRouter);
 
 // Error handler, should always be LAST use()
 app.use(globalErrorHandlerMiddleware);

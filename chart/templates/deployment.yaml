@@ -29,32 +29,36 @@ spec:
       {{- end }}
       serviceAccountName: {{ include "trivy-operator-newrelic-agent.serviceAccountName" . }}
       securityContext:
-        {{- toYaml .Values.podSecurityContext | nindent 8 }}
-      volumes:
-        {{- toYaml .Values.volumes | nindent 8 }}
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}x
       containers:
         - name: {{ .Chart.Name }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          envFrom:
-            {{- toYaml .Values.envFrom | nindent 12 }}
           env:
-            {{- toYaml .Values.env | nindent 12 }}
-          volumeMounts:
-            {{- toYaml .Values.volumeMounts | nindent 12 }}
+            - name: NEW_RELIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "trivy-operator-newrelic-agent.fullname" . }}
+                  key: newRelicApiKey
+            - name: NERD_GRAPH_URL
+              {{- if .Values.newRelic.isEuRegion }}
+              value: 'https://api.eu.newrelic.com/graphql'
+              {{- else }}
+              value: 'https://api.newrelic.com/graphql'
+              {{- end }}
           ports:
             - name: http
               containerPort: {{ .Values.service.containerPort }}
               protocol: TCP
           livenessProbe:
             httpGet:
-              path: /api/gpt/health
+              path: /api/health
               port: http
           readinessProbe:
             httpGet:
-              path: /api/gpt/health
+              path: /api/health
               port: http
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
