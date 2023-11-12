@@ -14,6 +14,11 @@ webhookRouter.post("/api/webhook", async (req: Request, res: Response) => {
   }
   const data: VulnerabilityReport = req.body;
 
+  if (!data || !data.kind || data.kind.toLowerCase() !== 'vulnerabilityreport') {
+    res.status(400).send({success: false, error: "Invalid payload!"});
+    return;
+  }
+
   const nerdGraphQuery = `
   query {
     actor {
@@ -71,7 +76,7 @@ webhookRouter.post("/api/webhook", async (req: Request, res: Response) => {
     res.status(400).send({success: false, error: newRelicReply.data.errorMessage});
     return;
   }
-
+  console.log('Sent successfully.');
   res.send({success: true});
 });
 
