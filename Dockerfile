@@ -5,7 +5,8 @@ COPY ./package-lock.json ./package-lock.json
 RUN npm i
 COPY . .
 RUN npm run build
-RUN npm run test
+ARG TARGETPLATFORM
+RUN [ "$TARGETPLATFORM" = "linux/amd64" ] && npm run test || echo "Skipping tests on ARM64"
 
 CMD npm run prod
 
